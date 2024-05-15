@@ -1,0 +1,53 @@
+import requests
+from bs4 import BeautifulSoup
+import json
+from datetime import datetime
+
+def extrair_dados(url):
+    response = requests.get(url)
+    if response.status_code == 200:
+        soup = BeautifulSoup(response.content, "html.parser")
+        title = soup.find("h1").get_text()
+        content = soup.find("div", class_="article-content").get_text()
+        return title, content
+    else:
+        return None, None
+
+def extrair_dados_concorrentes(concorrentes, urls):
+    dados = []
+    for concorrente, url_concorrente in zip(concorrentes, urls):
+        title, content = extrair_dados(url_concorrente)
+        if title and content:
+            data = {
+                "title": title,
+                "content": content,
+                "concorrentes": [concorrente],
+                "url": url_concorrente,
+                "fetched_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            }
+            dados.append(data)
+    return dados
+
+concorrentes = ["ABBV", "AZN", "BMY", "LLY", "GSK", "JNJ", "MRK", "NVS", "NVO", "PFE", "RHHBY", "SNY", "TKPHF"]
+urls = [
+    "https://www.abbvie.com.br/our-company/about-abbvie.html",
+    "https://www.astrazeneca.com.br/",
+    "https://www.bms.com/br",
+    "https://guiadafarmacia.com.br/materia/eli-lilly-diversidade-que-gera-inovacao/",
+    "https://br.gsk.com/pt-br/home/",
+    "https://www.janssen.com/brasil/johnson-johnson-innovative-medicine",
+    "https://www.merckgroup.com/br-pt/company/who-we-are.html",
+    "https://www.novartis.com/br-pt/",
+    "https://www.novonordisk.com.br/content/nncorp/br/pt/innovation-in-our-company-brazil.html",
+    "https://www.pfizer.com.br/",
+    "https://www.roche.com.br/topic/areas-terapeuticas",
+    "https://www.sanofi.com.br/pt",
+    "https://www.takeda.com/",
+]
+
+dados = extrair_dados_concorrentes(concorrentes, urls)
+
+# Escrever os dados em um arquivo JSONL
+with open("dados.jsonl", "w") as file:
+    for item in dados:
+        file.write(json.dumps(item) + "\n")
